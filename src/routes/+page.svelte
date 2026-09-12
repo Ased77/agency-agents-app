@@ -283,7 +283,7 @@
   .titlebar-btn {
     position: absolute;
     top: 50%;
-    left: var(--titlebar-toggle-left);
+    inset-inline-start: var(--titlebar-toggle-left);
     transform: translateY(-50%);
     display: inline-flex;
     align-items: center;
@@ -294,7 +294,7 @@
     border-radius: var(--radius-md);
     color: var(--color-text-muted);
     cursor: pointer;
-    transition: left var(--motion-duration-base, 180ms) var(--motion-ease-out, ease),
+    transition: inset-inline-start var(--motion-duration-base, 180ms) var(--motion-ease-out, ease),
                 background-color var(--motion-duration-fast) var(--motion-ease-out),
                 color var(--motion-duration-fast) var(--motion-ease-out);
   }
@@ -310,12 +310,12 @@
   .titlebar-nav {
     position: absolute;
     top: 50%;
-    left: var(--titlebar-title-left);
+    inset-inline-start: var(--titlebar-title-left);
     transform: translateY(-50%);
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    transition: left var(--motion-duration-base, 180ms) var(--motion-ease-out, ease);
+    transition: inset-inline-start var(--motion-duration-base, 180ms) var(--motion-ease-out, ease);
   }
   /* Inside the flex cluster these are in-flow, not absolutely placed. */
   .titlebar-btn.nav {
@@ -338,8 +338,8 @@
   .titlebar-title {
     position: absolute;
     top: 50%;
-    /* Shifted right of the back/forward cluster (≈62px wide). */
-    left: calc(var(--titlebar-title-left) + 62px);
+    /* Shifted past the back/forward cluster (≈62px wide). */
+    inset-inline-start: calc(var(--titlebar-title-left) + 62px);
     transform: translateY(-50%);
     margin: 0;
     font-size: var(--text-h3);
@@ -362,10 +362,11 @@
   .titlebar-right {
     position: absolute;
     top: 50%;
-    /* Align the cluster's right edge with the main panel's content
-       right edge. Panel-head and body both use var(--space-4) of
-       horizontal padding, so matching it here lines everything up. */
-    right: var(--space-4);
+    /* Align the cluster's end edge with the main panel's content
+       edge. Panel-head and body both use var(--space-4) of
+       horizontal padding, so matching it here lines everything up.
+       Logical property so the cluster mirrors under dir="rtl". */
+    inset-inline-end: var(--space-4);
     transform: translateY(calc(-50% + 1px));
     display: flex;
     align-items: center;

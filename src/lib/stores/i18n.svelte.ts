@@ -27,8 +27,17 @@ function detectLocale(): Locale {
   return DEFAULT_LOCALE;
 }
 
+const RTL_LOCALES: ReadonlySet<Locale> = new Set<Locale>(["fa"]);
+
+export function isRtl(locale: Locale): boolean {
+  return RTL_LOCALES.has(locale);
+}
+
 function applyLocale(locale: Locale) {
-  if (typeof document !== "undefined") document.documentElement.lang = locale;
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  root.lang = locale;
+  root.dir = isRtl(locale) ? "rtl" : "ltr";
 }
 
 function format(template: string, vars?: Record<string, string | number>): string {

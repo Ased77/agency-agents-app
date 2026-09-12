@@ -19,7 +19,7 @@ export default defineConfig(async () => ({
     // shared port makes one app's webview load the other's frontend.
     port: 1430,
     strictPort: true,
-    host: host || false,
+    host: host || "127.0.0.1",
     hmr: host
       ? {
           protocol: "ws",

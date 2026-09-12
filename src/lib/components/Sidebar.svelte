@@ -107,7 +107,7 @@
        resize handle in +page.svelte can drive it live. */
     flex: none;
     background: var(--color-surface-raised);
-    border-right: 1px solid var(--color-border);
+    border-inline-end: 1px solid var(--color-border);
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -211,7 +211,7 @@
   .sidebar.collapsed .nav-item .badge {
     position: absolute;
     top: 2px;
-    right: 4px;
+    inset-inline-end: 4px;
     min-width: 14px;
     height: 14px;
     padding: 0 4px;
