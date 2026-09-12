@@ -3,6 +3,44 @@
 Read this first after a compaction. Then `activeContext.md`, `agentLog.md` (append-only history),
 `phases/phase-roadmap.md`, `contracts.md`, `systemPatterns.md`, `decisions.md`.
 
+## ⏩ CURRENT (2026-09-12) — start here
+
+**The app's problem is not code, it is that nothing ships.** Last release **v0.3.0, 2026-07-05**. `main` sat
+unchanged 07-30 → 09-12. **16 open PRs, 16 open issues, every PR mergeable with zero conflicts.** Six PRs are ours.
+Several open issues may already be fixed on `main` and nobody can tell. **Do a v0.3.1 before writing more code.**
+
+### The cheapest path to a much better app
+1. Merge the small, already-written platform fixes: **#69** (Windows WebView2 bootstrapper, +3 lines — the likely
+   fix for #65 "window never opens"), **#85** (@ROTl24, console-window flash → #84), **#99** (@Musa919, Linux
+   AppArmor in the release container).
+2. Then the low-risk contributor work: #97 docs, #98 dep bumps, #101 Turkish i18n, #80 winget docs, #77 build fix.
+3. **Tag v0.3.1.** Release-build gotchas are unchanged and still live in `BUILD.md` / `release.sh` — updater-on
+   macOS builds must pass `--config`, Intel cross-compile needs the rustup toolchain, store the Keychain key via
+   `$(cat …)`, asset names use underscores.
+4. **#100 (`cargo fmt` the whole backend) should land on its own, ideally last** — it touches ~everything and will
+   conflict with anything in flight. `cargo fmt` is *not* clean on `main` today, so until #100 lands, format only
+   files you add.
+
+### Landed 2026-09-12 (PR #102) — and the durable lesson
+Closed **#94** (AppImage could not clone the catalog on any non-build host) and **#92** (`[object Object]`).
+The lesson worth keeping: **anything an AppImage spawns must have the bundle stripped from its environment first.**
+`AppRun` puts the bundle's `LD_LIBRARY_PATH` first and keeps no copy of the original, so a *host* binary loads
+*bundle* libraries. `run_git` was only the visible victim — `probe_version` (tool detection) and `reveal_path` were
+equally poisoned. When a report names one symptom, `grep -rn "Command::new"` for the siblings before calling it fixed.
+
+### Test bed for Linux work (new)
+`ssh scratch` — Ubuntu 26.04.1 aarch64, passwordless root, git/curl/node/cargo present. Left in place:
+`/tmp/ld-repro/lib/libnghttp2.so.14` (a genuine Ubuntu 22.04 arm64 build; put it on `LD_LIBRARY_PATH` to reproduce
+#94 on any host) and `/tmp/appimg/` (the v0.3.0 AppImage unsquashed — offset is `e_shoff + e_shentsize×e_shnum`
+from the ELF header). **Releases ship an amd64-only AppImage**, so the shipped Linux artifact cannot be *run* on
+that ARM box; reproduce mechanisms or build arm64 locally.
+
+### Gates
+`npm run check` = **0 errors on clean `main`** — take the baseline before blaming your diff. `cargo test` for the
+backend. No `lint`, no `test` npm script. A fresh worktree needs `npm ci`.
+
+---
+
 ## ⏩ CURRENT (2026-08-10) — post-v0.3.0 steady state; RTL Phase 1 in flight
 `main` @ `04c10be` (Persian #73 merged). **v0.3.0 shipped ~07-05** (Runbooks headline). Since then: a long
 steady-state of contributor merges + polish + i18n; **no new release cut yet**.

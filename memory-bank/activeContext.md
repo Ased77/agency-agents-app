@@ -1,5 +1,52 @@
 # Active Context — Agency Agents
 
+**State (2026-09-12)**: **post-v0.3.0 steady state, and the bottleneck is the release, not the code.** `main` @
+`e8f3fcd`. v0.3.0 shipped **2026-07-05**; `main` then sat still from 07-30 until today, 24+ commits past the tag,
+while the queue grew to **16 open PRs and 16 open issues — every PR mergeable, zero conflicts.** Six of those PRs
+are ours (#62 runbooks render, #67 clone-on-first-run, #69 Windows WebView2 embed, #81 RTL Phase 1, #82 healthcare
+label, #86 this memory-bank catch-up). Several open issues may already be fixed on `main` and nobody can tell,
+because nothing has shipped in two months. **The highest-value next action is cutting v0.3.1**, not writing more code.
+
+**Landed today (PR #102)** — two Linux bugs that compounded each other, both reported by @mrKlar:
+- **#94 — AppImage child processes inherited the bundle library path.** linuxdeploy's `AppRun.wrapped` exports
+  `LD_LIBRARY_PATH` with the bundle's dirs **first** and the caller's original appended, saving **no copy** of the
+  original, so there is nothing to restore — the fix must remove. Every spawned child inherited it, so a *host*
+  binary resolved the bundle's Ubuntu 22.04 libraries: `git-remote-https` died with `undefined symbol:
+  nghttp2_option_set_no_rfc9113_leading_and_trailing_ws_validation`, and catalog setup, Pull and Check-for-updates
+  all failed. **Reported as an Arch bug; it is really every host that is not the build host** — reproduced on
+  Ubuntu 26.04 aarch64. New `src-tauri/src/util/proc.rs` strips only entries under `$APPDIR`, keeps the host path,
+  and no-ops when `$APPDIR` is unset (all of macOS/Windows). Applied at **all three** spawn sites — `run_git` was
+  only the visible victim; `probe_version` (tool detection) and `reveal_path` were equally poisoned.
+- **#92 — every backend error rendered as `[object Object]`.** Tauri rejects with a serialized `AppError`, a plain
+  object, so `String(e)` yields that. New `errorText()` in `types.ts` routes AppError → `appErrorMessage()`,
+  Error → `.message`, else → `String`, applied at every user-facing site (9 components, 6 stores). It also cleared
+  three places showing a bare code like `io`, and three redundant `isAppError` branches. **This bug is why #94 cost
+  its reporter an evening.** Unreadable errors do not just annoy, they hide the next bug.
+
+**Contributor burst (09-09 → 09-11), all unreviewed:** @Musa919 ×4 (#97 docs, #98 dep bumps, #99 Linux AppArmor
+release fix, #100 `cargo fmt` the whole backend), @HBBTR #101 Turkish i18n, @el-j #95 trust command (+ #96 brew
+cask trust). @mrKlar filed #92/#93/#94 in one sitting — high-quality, mechanism-level reports.
+
+**Open issues clustered by platform** (fix them in one release, not one at a time):
+- *Windows*: #65 "installs, runs, window never opens, no error" — our own **#69** (WebView2 bootstrapper, +3 lines)
+  is the likely fix and has been sitting since 07-12; #66 Antigravity not detected; #84 terminal flash, fixed by
+  @ROTl24's **#85**.
+- *Linux*: #94 + #92 done today; #89 WSL2 blank window (CSS/images never render) still open.
+- *Features*: #91 Mistral Vibe, #90 Grok, #71 OpenClaw not detecting, #79 count mismatch, #27/#26 skills + Hermes.
+
+**Gates, and their traps.** `npm run check` (svelte-check) is **0 errors on clean `main`** — take a baseline before
+blaming your own diff. `cargo test` for the backend. There is **no `lint` and no `test` npm script**. `cargo fmt` is
+**not** clean on `main` (that is what #100 is for), so format only files you *add* or your diff drowns in unrelated
+churn. A fresh worktree needs `npm ci` before `npm run check` can run. Linux work has a real test bed now: `ssh
+scratch`, Ubuntu 26.04 aarch64, passwordless root. Note releases ship an **amd64-only** AppImage, so the shipped
+Linux artifact cannot be executed there — reproduce mechanisms instead.
+
+**Read `NEXT-SESSION.md` for the resume picture.**
+
+---
+
+## History — post-v0.3.0 steady state (2026-08-10)
+
 **State (2026-08-10)**: **post-v0.3.0 steady state** — `main` @ `04c10be`. v0.3.0 shipped ~07-05 (Runbooks); since
 then contributor merges + polish + i18n, no new release. **Live focus: RTL localization** — Phase 1 is PR #81
 (dir switch + titlebar mirror + Settings close), verified live in Persian; Phase 2 (logical-property sweep, ~½ day)
