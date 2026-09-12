@@ -1,5 +1,30 @@
 # Decisions (ADRs) — Agency Agents
 
+## 2026-09-12 — Strip AppImage bundle paths from every child process, rather than patching git
+
+**Context.** The v0.3.0 AppImage could not clone the catalog on any host that was not the build host. linuxdeploy's
+`AppRun.wrapped` exports `LD_LIBRARY_PATH` with the bundle's directories first and the caller's original appended,
+and saves no copy of the original anywhere. Children inherit it, so a host binary loads bundle libraries it was not
+built against. Confirmed by unsquashing the shipped AppImage and reading `AppRun`, `apprun-hooks/…-gtk.sh` and the
+strings in `AppRun.wrapped`.
+
+**Decision.** One helper, `util::proc`, applied at **every** spawn site rather than a targeted fix in `run_git`.
+It removes only path entries under `$APPDIR`, leaving the host's own search path intact, and is a no-op when
+`$APPDIR` is unset.
+
+**Why not the alternatives.**
+- *Fix `run_git` only* — rejected: `probe_version` and `reveal_path` spawn host binaries through the same
+  environment. Tool detection on Linux was plausibly degraded by this too. A bug report names a symptom; grep for
+  the siblings (`grep -rn "Command::new"`).
+- *Restore the original `LD_LIBRARY_PATH`* — impossible: AppRun keeps no copy. Removal is the only correct option.
+- *Clear the whole environment* — rejected: too blunt, would break legitimate inherited config.
+- *Strip `XDG_DATA_DIRS`/`GTK_*` wholesale* — rejected: AppRun *prepends* to those, so the host halves are real and
+  must survive. We filter per entry.
+
+**Consequence.** Bundle-vs-host library conflicts are closed off for all current and future child processes. The
+rule generalizes: **anything an AppImage spawns must have the bundle stripped from its environment first.**
+
+
 ### 2026-06-05: Fork brew-browser structurally
 **Status**: Approved. **Context**: brew-browser is a proven, signed, shipping Tauri 2 +
 Svelte 5 native macOS app that is "a thin respectful frontend over a CLI." Agency Agents

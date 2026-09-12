@@ -709,3 +709,17 @@ never separate releases; they ship here. Then took it further: **turned auto-upd
   the matching filtered view; an active lens shows a **flat all-divisions list** (`showDivisions` gates on
   `lens === "all"`). New "Needs attention" bucket = Outdated ∪ Modified ∪ Missing. Dropped the lens's cross-launch
   localStorage persistence (a sticky filter would hijack the landing). svelte-check 0, build clean.
+
+## 2026-09-12 — AppImage child-env fix + readable errors (PR #102)
+
+Closed **#94** (AppImage `git clone` fails on any non-build host) and **#92** (`[object Object]` for every backend
+error). One shared `util::proc` helper strips `$APPDIR` entries from child environments, applied at all three spawn
+sites; `errorText()` in `types.ts` replaces `String(e)` at every user-facing site.
+
+Verified by unsquashing the shipped AppImage to read `AppRun`, reproducing the exact symbol-lookup failure on a
+Ubuntu 26.04 aarch64 VM with a real jammy `libnghttp2`, and proving the fix end to end in the same environment.
+7 Rust tests; `npm run check` 0 errors, matching the clean-`main` baseline.
+
+Surveyed both repos while here. The app's real problem is not code: **v0.3.0 has been the last release since
+2026-07-05**, `main` sat still 07-30 → 09-12, and 16 PRs / 16 issues are open with **every PR mergeable**. Next
+action is a v0.3.1, not more fixes. Full detail in `tasks/2026-09/README.md` and `activeContext.md`.
