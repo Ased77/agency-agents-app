@@ -31,6 +31,7 @@ echo "  out:  $OUT"
 echo "  (QEMU emulation is slow for non-native arches — be patient.)"
 
 docker run --rm --platform "$PLATFORM" \
+  --security-opt apparmor=unconfined \
   -v "$ROOT":/src:ro \
   -v "$OUT":/out \
   -e DEBIAN_FRONTEND=noninteractive \
