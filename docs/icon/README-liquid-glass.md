@@ -1,5 +1,27 @@
 # Liquid Glass app icon (macOS 26 Tahoe)
 
+## Current approved sources — 2026-09-06
+
+`AppIcon.icon` is now the approved red brain/circuit shipping master;
+`AppIcon-cobalt.icon` is the approved alternate. Both contain light/dark
+specializations. The original layer studies below are historical, not current
+shipping sources. The two current foreground layers are pure SVG geometry;
+edit `Sources/Front.svg` (brain) and `Sources/Middle.svg` (circuitry). The build
+script copies those masters into both palette documents before rendering.
+
+Regenerate with full Xcode and installed npm dependencies:
+`DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer bash docs/icon/build-icons.sh`.
+This compiles `src-tauri/Assets.car` and regenerates desktop PNG/ICO/ICNS
+fallbacks plus the in-app icon and favicon. Mobile assets remain unchanged.
+`bundle.resources` and `CFBundleIconName=AppIcon` retain the existing catalog
+integration. No dependency upgrade is required for this established path.
+
+Correction to the historical notes below: `actool` does compile `.icon` files;
+the asset catalog carries layered appearances, while exported PNG/ICNS files
+are static fallbacks. They are not interchangeable source formats.
+
+## Historical implementation notes (superseded by the sources above)
+
 On macOS 26, the system renders app icons with **Liquid Glass** — the specular
 edge highlight, depth, and Light/Dark/Clear/Tinted variants are applied *live by
 the OS* from a **layered** icon authored in **Icon Composer** (`.icon` format).
