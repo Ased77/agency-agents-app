@@ -41,8 +41,19 @@ thiserror = "1"
 uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 
-# HTTP for trending analytics
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "gzip"] }
+# HTTP for trending analytics + the custom AI provider.
+# `stream` (provider) pulls in `futures-util` for SSE reading and
+# `tokio-util` for the byte-stream adapter — both already in the lockfile.
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "gzip", "stream"] }
+
+# Stream combinators for `Response::bytes_stream()` in `provider::openai`.
+futures-util = "0.3"
+
+# Offline license verification for the provider feature. Same minisign trust
+# tooling (`tauri signer` / the `minisign` CLI) the updater already uses, but a
+# *separate* keypair: a compromised updater key must not mint licenses, and
+# vice versa. Already a transitive dep of `tauri-plugin-updater`.
+minisign-verify = "0.2"
 
 # OS-correct paths for ~/Library/Application Support
 dirs = "5"

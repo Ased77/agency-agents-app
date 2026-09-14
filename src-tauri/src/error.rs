@@ -90,7 +90,54 @@ pub enum AppError {
     /// the currently-running build — the explicit downgrade-attack defense.
     #[error("update would downgrade {current} to {target}; refusing")]
     DowngradeRejected { current: String, target: String },
+
+    // ---------------------------------------------------------------
+    // Custom AI provider (OpenAI-compatible) + offline license.
+    // ---------------------------------------------------------------
+
+    /// No usable provider settings yet (empty base URL / model, or the
+    /// master `enabled` switch is off). The UI routes this to
+    /// Settings → AI provider.
+    #[error("provider is not configured: {message}")]
+    ProviderNotConfigured { message: String },
+
+    /// The provider settings exist but no API key is in the OS keyring.
+    /// **No disk fallback** — the key never lands in `provider.json`.
+    #[error("provider api key missing")]
+    ProviderKeyMissing,
+
+    /// The configured base URL resolves to a loopback / private / link-local
+    /// host and the user has not explicitly consented to that host. The
+    /// SSRF guard (`util::net::is_public_host`) owns this decision.
+    #[error("provider host {host} is not public-routable and is not consented")]
+    ProviderBlockedHost { host: String },
+
+    /// The provider answered with a non-success status. Carries the
+    /// provider's own error text (truncated) so the UI can show it.
+    #[error("provider returned HTTP {status} from {url}: {message}")]
+    ProviderHttp {
+        url: String,
+        status: u16,
+        message: String,
+    },
+
+    /// The provider stream carried an inline error object, or the stream
+    /// ended in a shape we could not read.
+    #[error("provider stream error: {message}")]
+    ProviderStream { message: String },
+
+    /// The offline license is absent, unverifiable, expired, bound to other
+    /// agents, or the system clock moved backwards past our high-water mark.
+    /// `reason` is a stable discriminator (`missing` | `unconfigured` |
+    /// `malformed` | `signature` | `expired` | `clock` | `agent`).
+    #[error("license is not usable ({reason}): {message}")]
+    LicenseInvalid { reason: String, message: String },
+
+    /// A valid license exists but the meter is exhausted for this operation.
+    #[error("entitlement exhausted for the {meter} meter ({remaining} remaining)")]
+    NotEntitled { meter: String, remaining: u64 },
 }
+
 
 // ---------- From impls ----------
 

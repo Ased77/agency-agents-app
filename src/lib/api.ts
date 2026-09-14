@@ -11,13 +11,21 @@
  * `corpus` / `install`.)
  */
 
-import { invoke } from "@tauri-apps/api/core";
+import { Channel, invoke } from "@tauri-apps/api/core";
 
 import type {
+  ChatCharge,
   CreatedIssue,
   DeviceFlowPoll,
   DeviceFlowStart,
+  Entitlement,
   GithubStatus,
+  LicenseStatus,
+  ProviderChatEvent,
+  ProviderChatRequest,
+  ProviderConfig,
+  ProviderKeyStatus,
+  ProviderTestOutcome,
   RepoStats,
   Settings,
   UpdateCheckOutcome,
@@ -212,4 +220,84 @@ export function updateSkip(version: string): Promise<void> {
  */
 export function updateRelaunch(): Promise<void> {
   return invoke<void>("update_relaunch");
+}
+
+// ============================================================
+// Custom AI provider (non-Claude) + offline license
+// ============================================================
+//
+// Three gates run backend-side on every paid call: Offline Mode, then
+// "agents only" (an agent slug + its persona are mandatory), then the license
+// and its allowance. Secrets live in the OS keyring — the API key is written
+// through `providerKeySet` and never read back into the renderer.
+
+/** Read provider settings (base URL, model, meter, agent scope). */
+export function providerConfigGet(): Promise<ProviderConfig> {
+  return invoke<ProviderConfig>("provider_config_get");
+}
+
+/**
+ * Persist provider settings. The backend validates the base URL against the
+ * SSRF guard, so a blocked private host is rejected here rather than at chat
+ * time. Returns the canonicalized config.
+ */
+export function providerConfigSet(config: ProviderConfig): Promise<ProviderConfig> {
+  return invoke<ProviderConfig>("provider_config_set", { config });
+}
+
+/** Store the provider API key in the OS keyring. No disk fallback. */
+export function providerKeySet(key: string): Promise<void> {
+  return invoke<void>("provider_key_set", { key });
+}
+
+/** Whether a key is stored — never returns the key. */
+export function providerKeyStatus(): Promise<ProviderKeyStatus> {
+  return invoke<ProviderKeyStatus>("provider_key_status");
+}
+
+/** Delete the stored provider API key. Idempotent. */
+export function providerKeyClear(): Promise<void> {
+  return invoke<void>("provider_key_clear");
+}
+
+/** Verify the stored license (offline, against the pinned public key). */
+export function licenseStatus(): Promise<LicenseStatus> {
+  return invoke<LicenseStatus>("license_status");
+}
+
+/**
+ * Verify a pasted license blob and store it. Invalid licenses are rejected
+ * before anything is written.
+ */
+export function licenseSet(blob: string): Promise<LicenseStatus> {
+  return invoke<LicenseStatus>("license_set", { blob });
+}
+
+/** Remove the stored license. */
+export function licenseClear(): Promise<LicenseStatus> {
+  return invoke<LicenseStatus>("license_clear");
+}
+
+/** Remaining allowance, or null when no license is stored. */
+export function entitlementGet(): Promise<Entitlement | null> {
+  return invoke<Entitlement | null>("entitlement_get");
+}
+
+/** Configure-time connectivity probe (no license/meter gate). */
+export function providerTest(): Promise<ProviderTestOutcome> {
+  return invoke<ProviderTestOutcome>("provider_test");
+}
+
+/**
+ * One agent chat turn, streamed. `onEvent` receives every delta plus a final
+ * `done` frame; the promise resolves with the charge the backend recorded.
+ * The caller is responsible for consuming `done` before trusting the totals.
+ */
+export function providerChatStream(
+  request: ProviderChatRequest,
+  onEvent: (event: ProviderChatEvent) => void,
+): Promise<ChatCharge> {
+  const channel = new Channel<ProviderChatEvent>();
+  channel.onmessage = onEvent;
+  return invoke<ChatCharge>("provider_chat_stream", { request, onEvent: channel });
 }

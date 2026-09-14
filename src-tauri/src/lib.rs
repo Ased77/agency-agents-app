@@ -9,6 +9,7 @@ mod corpus;
 mod error;
 mod github;
 mod install;
+mod provider;
 mod registry;
 mod render;
 mod state;
@@ -50,6 +51,34 @@ const UPDATER_PUBKEY: &str = "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZX
 
 pub fn updater_pubkey() -> &'static str {
     UPDATER_PUBKEY
+}
+
+// =============================================================
+// Custom AI provider — offline license public key
+// =============================================================
+//
+// The public half of the minisign keypair used to sign licenses for the
+// bring-your-own (non-Claude) provider feature. Same tooling as the updater
+// key above (`tauri signer generate` / the `minisign` CLI) but a **separate
+// keypair**: a compromised updater key must not be able to mint licenses, and
+// license issuance may be delegated per-customer without touching release
+// signing.
+//
+// Generate with:
+//
+//     minisign -G -p ~/.config/agency-agents-app/license.pub \
+//                 -s ~/.config/agency-agents-app/license.key
+//
+// Then paste the **single-line base64** public key from `license.pub` here
+// (strip the `untrusted comment:` line). Keep the private key offline,
+// chmod 600, outside the repo. Until this is set the license path fails
+// closed: `license_set` refuses everything with `unconfigured`, so no build
+// can accidentally accept licenses it can't verify.
+const LICENSE_PUBKEY: &str = "REPLACE_ME_WITH_THE_MINISIGN_LICENSE_PUBLIC_KEY";
+
+/// Pinned license verification key (see [`LICENSE_PUBKEY`]).
+pub fn license_pubkey() -> &'static str {
+    LICENSE_PUBKEY
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -148,6 +177,20 @@ pub fn run() {
             github_watch,
             github_unwatch,
             github_create_issue,
+            // Custom AI provider (non-Claude) + offline license. See
+            // `provider/mod.rs` for the module map and `commands/provider.rs`
+            // for the three gates (offline mode → agents only → paid access).
+            provider_config_get,
+            provider_config_set,
+            provider_key_set,
+            provider_key_status,
+            provider_key_clear,
+            license_status,
+            license_set,
+            license_clear,
+            entitlement_get,
+            provider_test,
+            provider_chat_stream,
             update_check_now,
             update_install,
             update_skip,

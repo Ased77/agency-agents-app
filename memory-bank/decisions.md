@@ -191,6 +191,55 @@ state; the format-membership rule is self-maintaining: ship a renderer → add i
 parity test keeps the app honest. Antigravity stays app-recognized-only until upstream makes its skill
 deterministic (its `date_added` is non-deterministic, so it can't share `skill-md`).
 
+### 2026-09-14: Custom (non-Claude) provider — BYO OpenAI-compatible endpoint, offline license, agents-only
+
+**Status**: Implemented
+
+**Context**: The catalog is a catalog: it installs agent personas into other
+people's tools and never infers anything itself. Users asked to *use* an agent
+in the app, and the constraint was explicit — a **custom, non-Claude** provider,
+with **token- or time-based paid access**, **limited to agents only**.
+
+**Decision**:
+
+1. **One OpenAI-compatible endpoint** (`POST {base_url}/chat/completions`,
+   `stream: true`) configured by the user. No vendor SDK, no Anthropic path:
+   DeepSeek/Qwen/OpenRouter/Groq/vLLM/llama.cpp/Ollama's shim all fit one client
+   (`provider/openai.rs`).
+2. **The meter is per profile** (`tokens` | `time` | `both`); the ledger stores
+   seconds (displayed as minutes) so sub-minute chats bill honestly.
+3. **Paid access is an offline-verified license**: a base64 JSON payload plus a
+   stock **minisign** signature, verified against a public key compiled into the
+   binary — the same trust tooling as the updater, but a **separate keypair**.
+   Blob lives in the OS keyring; `state/provider-usage.json` holds consumption
+   plus a clock high-water mark that makes a rolled-back system clock detectable
+   (`meter::clock_ok`).
+4. **Agents only**, enforced at three levels: the request shape requires an
+   agent slug + persona (`ChatRequest`), the profile's `agents` allow-list and
+   the license's `agents` list must *both* cover that agent, and the UI hides the
+   composer otherwise. The connection test uses a probe persona and skips the
+   license gate (nothing is spent before setup finishes).
+5. **SSRF stays authoritative**: `util::net::is_public_host` gates every call,
+   and a private/loopback host (Ollama, LM Studio, an internal gateway) passes
+   only when the user turns on `allow_private_host` *and* lists that exact host
+   (`consented_hosts`). Consent for `localhost` does not unlock
+   `169.254.169.254`.
+
+**Alternatives considered**: a server-side seat check (rejected: the app is
+local-first and has no account system); signing licenses with the existing
+updater key (rejected: blast radius — a leaked updater key could mint licenses);
+storing the API key in `settings.json` (rejected: the settings file is diffed,
+backed up and pasted into issues).
+
+**Consequences**: paid access works offline and needs no backend, at the cost of
+no server-side revocation — an issued license is valid until it expires, so
+issuance should stay short-lived. Enabling the private-endpoint exemption widens
+what a compromised provider URL can reach; the consent list is the mitigation
+and is deliberately per-host.
+
+**References**: `provider/` (license, meter, openai), `commands/provider.rs`,
+`docs/provider-license.md`, `contracts.md` §A/§C/§D.
+
 ### 2026-06-23: Updater-enabled macOS release build mechanics
 **Status**: Approved (v0.2.0 — the first release built WITHOUT `SKIP_UPDATER`). **Context**: turning auto-update
 on exposed three latent traps that the manual-DMG (`SKIP_UPDATER`) path had always sidestepped. **Decisions**

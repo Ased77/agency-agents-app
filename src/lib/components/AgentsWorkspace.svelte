@@ -26,6 +26,7 @@
   import LoadingState from "./LoadingState.svelte";
   import ResizeHandle from "./ResizeHandle.svelte";
   import PersonaBody from "./PersonaBody.svelte";
+  import ChatPane from "./ChatPane.svelte";
   import DeploymentMatrix from "./DeploymentMatrix.svelte";
   import DiffModal from "./DiffModal.svelte";
   import DivisionsLanding from "./DivisionsLanding.svelte";
@@ -495,6 +496,17 @@
           {#snippet deploy()}
             {#if panelAgent}
               <DeploymentMatrix agent={panelAgent} onDiff={(t) => (diffTarget = t)} />
+            {/if}
+          {/snippet}
+          {#snippet chat()}
+            {#if panelAgent}
+              <!-- Agent-scoped by construction: the pane sends the agent's
+                   slug + persona, and the backend requires a license that
+                   covers that agent. Keyed so switching agents starts a
+                   fresh conversation instead of continuing the previous one. -->
+              {#key panelAgent.slug}
+                <ChatPane agent={panelAgent} />
+              {/key}
             {/if}
           {/snippet}
         </PersonaBody>

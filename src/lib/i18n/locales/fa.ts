@@ -691,6 +691,98 @@ const fa = {
   "preset.ai-builders.description": "ویژگی‌های هوش مصنوعی را بر اساس پایه داده و دستور محکم ارائه دهید.",
   "teamExample.ai-builders.1": "[ویژگی هوش مصنوعی] را بر اساس پایه داده و دستور محکم طراحی و بسازید: طرحواره، بازیابی، دستورات و ارزیابی‌ها — تا زمانی که ارزیابی‌ها بر روی مجموعه جداگانه قبول شوند، حلقه بزنید.",
   "teamExample.ai-builders.2": "دستورات خود را برای [مورد استفاده] محکم کنید: مجموعه‌ای از موارد آزمایشی بنویسید، نرخ قبولی را اندازه‌گیری کنید و تا زمانی که قابل اعتماد شود، تکرار کنید.",
+  // ── سرویس‌دهنده‌ی هوش مصنوعی سفارشی (غیر از Claude) + لایسنس آفلاین ──
+  "settings.provider": "سرویس‌دهنده‌ی هوش مصنوعی",
+  "provider.intro":
+    "برنامه را به سرویس‌دهنده‌ی سازگار با OpenAI خودتان وصل کنید (DeepSeek، Qwen، OpenRouter، سرور محلی vLLM یا Ollama و…). تنها مصرف آن گفت‌وگو با ایجنت‌هاست: هر درخواست شخصیت ایجنت را همراه دارد و دسترسی پرداختی با لایسنس امضاشده‌ای که در پایین وارد می‌کنید فعال می‌شود.",
+  "provider.field.label": "نام نمایشی",
+  "provider.field.labelHint": "گیت‌وی داخلی",
+  "provider.field.baseUrl": "آدرس پایه (Base URL)",
+  "provider.field.baseUrlHint": "ریشه‌ی سازگار با OpenAI، همراه با پیشوند مسیر (…/v1).",
+  "provider.field.model": "نام مدل",
+  "provider.field.meter": "مبنای مصرف",
+  "provider.field.meterHint":
+    "مصرف هر گفت‌وگو بر اساس این مبنا کم می‌شود؛ لایسنس هم باید همان مبنا را مجاز کند.",
+  "provider.field.scope": "ایجنت‌های مجاز",
+  "provider.field.scopeHint":
+    "شناسه‌ی ایجنت‌ها با کاما. خالی بگذارید تا همه‌ی ایجنت‌هایی که لایسنس پوشش می‌دهد مجاز باشند.",
+  "provider.meter.tokens": "توکنی",
+  "provider.meter.time": "زمانی",
+  "provider.meter.both": "توکنی + زمانی",
+  "provider.rate.tokens": "تومان به‌ازای هر ۱۰۰۰ توکن",
+  "provider.rate.time": "تومان به‌ازای هر دقیقه",
+  "provider.enabled": "این سرویس‌دهنده فعال باشد",
+  "provider.key.title": "کلید API",
+  "provider.key.hint":
+    "در کلیدخانه‌ی سیستم‌عامل ذخیره می‌شود — هرگز روی دیسک نوشته و هرگز دوباره نمایش داده نمی‌شود.",
+  "provider.key.placeholder": "sk-…",
+  "provider.key.save": "ذخیره‌ی کلید",
+  "provider.key.remove": "حذف کلید",
+  "provider.key.set": "ذخیره شده",
+  "provider.key.unset": "تنظیم نشده",
+  "provider.private.title": "سرویس‌دهنده‌های محلی/خصوصی",
+  "provider.private.hint":
+    "آدرس‌های لوکال و شبکه‌ی خصوصی به‌صورت پیش‌فرض رد می‌شوند. اگر سرویس‌دهنده متعلق به خودتان است (Ollama، LM Studio یا گیت‌وی داخلی)، گزینه را تیک بزنید و میزبان دقیق را فهرست کنید.",
+  "provider.private.enable": "اجازه‌ی سرویس‌دهنده‌های خصوصی",
+  "provider.private.hosts": "میزبان‌های تأییدشده",
+  "provider.private.addHost": "افزودن میزبان فعلی",
+  "provider.license.title": "لایسنس",
+  "provider.license.hint":
+    "یک بلاک امضاشده و خودبسنده که به‌صورت آفلاین با کلید عمومی موجود در برنامه بررسی می‌شود. بدون حساب کاربری، بدون سرور و بدون درخواست شبکه.",
+  "provider.license.valid": "معتبر",
+  "provider.license.invalid": "قابل استفاده نیست",
+  "provider.license.reason": "رد شد ({reason}) —",
+  "provider.license.paste": "چسباندن لایسنس",
+  "provider.license.placeholder": "خط base64 محتوا و سپس بلاک امضا",
+  "provider.license.activate": "فعال‌سازی لایسنس",
+  "provider.license.remove": "حذف لایسنس",
+  "provider.license.plan": "پلن",
+  "provider.license.meter": "مبنای مصرف",
+  "provider.license.expires": "انقضا",
+  "provider.license.never": "بدون انقضا",
+  "provider.license.remaining": "باقی‌مانده",
+  "provider.test.run": "آزمایش اتصال",
+  "provider.test.running": "در حال آزمایش…",
+  "provider.test.ok": "اتصال برقرار شد به {model} — {tokens} توکن در {seconds} ثانیه.",
+  "provider.save": "ذخیره‌ی تنظیمات",
+  "provider.saved": "ذخیره شد.",
+  "provider.footnote":
+    "مصرف به‌صورت محلی ثبت می‌شود و از داخل برنامه قابل شارژ نیست — لایسنس جدید یا به‌روز، سقف مصرف را جایگزین می‌کند.",
+
+  // ── پنجره‌ی گفت‌وگو با ایجنت ──
+  "agentChat.title": "گفت‌وگو با این ایجنت",
+  "agentChat.collapse": "بستن",
+  "agentChat.subtitle": "با {model}",
+  "agentChat.needsSetup": "برای گفت‌وگو، سرویس‌دهنده را تنظیم کنید",
+  "agentChat.clear": "پاک‌کردن گفت‌وگو",
+  "agentChat.empty": "اولین کار را از ایجنت بخواهید.",
+  "agentChat.placeholder": "پیام بنویسید… (Enter برای ارسال، Shift+Enter خط جدید)",
+  "agentChat.send": "ارسال",
+  "agentChat.thinking": "ایجنت در حال پاسخ‌دادن است",
+  "agentChat.estimated": "تخمینی",
+  "agentChat.truncated":
+    "سقف مصرف شما در میانه‌ی پاسخ تمام شد و پاسخ ناقص ماند. متن ناقص حفظ شده و مصرف آن محاسبه شده است.",
+  "agentChat.remaining": "باقی‌مانده",
+  "agentChat.usageTokens": "{tokens} توکن مصرف شد",
+  "agentChat.usageTime": "{seconds} ثانیه زمان مصرف شد",
+  "agentChat.meter.tokens": "مبنای توکنی",
+  "agentChat.meter.time": "مبنای زمانی",
+  "agentChat.meter.both": "مبنای توکنی + زمانی",
+  "agentChat.unit.tokens": "توکن",
+  "agentChat.unit.minutes": "دقیقه",
+  "agentChat.gate.notConfigured":
+    "هنوز سرویس‌دهنده‌ی هوش مصنوعی تنظیم نشده است، پس چیزی برای گفت‌وگو وجود ندارد.",
+  "agentChat.gate.openSettings": "بازکردن تنظیمات سرویس‌دهنده",
+  "agentChat.gate.notLicensed":
+    "گفت‌وگو به لایسنس معتبر نیاز دارد. بقیه‌ی برنامه بدون آن کار می‌کند.",
+  "agentChat.gate.addLicense": "افزودن لایسنس",
+  "agentChat.gate.notCovered":
+    "سرویس‌دهنده یا لایسنس شما این ایجنت را پوشش نمی‌دهد. ایجنت‌های مجاز را در تنظیمات → سرویس‌دهنده‌ی هوش مصنوعی تنظیم کنید یا لایسنسی بگیرید که این ایجنت را شامل شود.",
+  "agentChat.gate.loadingPersona": "در حال بارگذاری شخصیت این ایجنت…",
+  "agentChat.gate.outOfAllowance":
+    "سقف مصرف {meter} شما به پایان رسیده است. برای ادامه لایسنسی با اعتبار باقی‌مانده اضافه کنید.",
+  "agentChat.footnote":
+    "پاسخ‌ها از سرویس‌دهنده‌ی خودتان می‌آید. شخصیت ایجنت و متن گفت‌وگو به آن ارسال می‌شود؛ چیز دیگری از این دستگاه خارج نمی‌شود.",
 } satisfies Partial<Messages>;
 
 export default fa;

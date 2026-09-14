@@ -23,6 +23,7 @@
     loading = false,
     deploy,
     headerAction,
+    chat,
     onCategory,
   }: {
     agent: Agent | null;
@@ -32,6 +33,9 @@
     deploy?: Snippet;
     /** Optional action at the right of the title row (e.g. the Install… button). */
     headerAction?: Snippet;
+    /** Optional agent-scoped chat band, rendered after the persona body. The
+        pane owns its own collapsed/expanded state. */
+    chat?: Snippet;
     /** When provided, the category ("division") pill becomes a button that
         deep-links to that division. */
     onCategory?: (slug: string) => void;
@@ -89,6 +93,10 @@
       {/if}
     </div>
   </div>
+
+  {#if chat}
+    {@render chat()}
+  {/if}
 {/if}
 
 <style>

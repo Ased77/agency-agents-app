@@ -36,6 +36,7 @@ const en = {
   "settings.catalog": "Catalog",
   "settings.network": "Network",
   "settings.github": "GitHub",
+  "settings.provider": "AI provider",
   "settings.activity": "Activity",
   "settings.about": "About",
   "settings.close": "Close Settings",
@@ -689,6 +690,99 @@ const en = {
   "preset.ai-builders.description": "Ship AI features on a solid data + prompt foundation.",
   "teamExample.ai-builders.1": "Design and build [AI feature] on a solid data + prompt foundation: schema, retrieval, prompts, and evals — loop until the evals pass on a held-out set.",
   "teamExample.ai-builders.2": "Harden our prompts for [use case]: write a suite of test cases, measure the pass rate, and iterate until it's reliable.",
+  // ── Custom AI provider (non-Claude) + offline license ──────────────
+  // Bring-your-own OpenAI-compatible endpoint. Paid access is a signed,
+  // offline-verified license; chats are agent-scoped by construction.
+  "provider.intro":
+    "Point the app at your own OpenAI-compatible endpoint (DeepSeek, Qwen, OpenRouter, a local vLLM/Ollama server…). Agent chats are the only thing it is used for: every request carries the agent's persona, and paid access is unlocked by a signed license you paste below.",
+  "provider.field.label": "Display name",
+  "provider.field.labelHint": "Internal gateway",
+  "provider.field.baseUrl": "Base URL",
+  "provider.field.baseUrlHint": "The OpenAI-compatible root, including any path prefix (…/v1).",
+  "provider.field.model": "Model",
+  "provider.field.meter": "Meter",
+  "provider.field.meterHint":
+    "What a chat is billed against. The license must allow the same meter.",
+  "provider.field.scope": "Allowed agents",
+  "provider.field.scopeHint":
+    "Comma-separated agent slugs. Leave empty to allow every agent your license covers.",
+  "provider.meter.tokens": "Tokens",
+  "provider.meter.time": "Time",
+  "provider.meter.both": "Tokens + time",
+  "provider.rate.tokens": "Toman per 1k tokens",
+  "provider.rate.time": "Toman per minute",
+  "provider.enabled": "Enable this provider",
+  "provider.key.title": "API key",
+  "provider.key.hint":
+    "Stored in your operating system's keyring — never written to disk and never shown again.",
+  "provider.key.placeholder": "sk-…",
+  "provider.key.save": "Save key",
+  "provider.key.remove": "Remove key",
+  "provider.key.set": "Stored",
+  "provider.key.unset": "Not set",
+  "provider.private.title": "Local / private endpoints",
+  "provider.private.hint":
+    "Loopback and private-network hosts are refused by default. If the endpoint is yours (Ollama, LM Studio, an internal gateway), tick the box and list the exact host.",
+  "provider.private.enable": "Allow private endpoints",
+  "provider.private.hosts": "Consented hosts",
+  "provider.private.addHost": "Add current host",
+  "provider.license.title": "License",
+  "provider.license.hint":
+    "A signed, self-contained blob verified offline against a public key baked into the app. No account, no server, no network call.",
+  "provider.license.valid": "Valid",
+  "provider.license.invalid": "Not usable",
+  "provider.license.reason": "Rejected ({reason}) —",
+  "provider.license.paste": "Paste license",
+  "provider.license.placeholder": "Base64 payload line, followed by the signature block",
+  "provider.license.activate": "Activate license",
+  "provider.license.remove": "Remove license",
+  "provider.license.plan": "Plan",
+  "provider.license.meter": "Meter",
+  "provider.license.expires": "Expires",
+  "provider.license.never": "Never",
+  "provider.license.remaining": "Remaining",
+  "provider.test.run": "Test connection",
+  "provider.test.running": "Testing…",
+  "provider.test.ok": "Connected to {model} — {tokens} tokens in {seconds}s.",
+  "provider.save": "Save settings",
+  "provider.saved": "Saved.",
+  "provider.footnote":
+    "Usage is recorded locally and can't be topped up from inside the app — a new license or an updated one replaces the allowance.",
+
+  // ── Agent chat pane ──
+  "agentChat.title": "Chat with this agent",
+  "agentChat.collapse": "Hide",
+  "agentChat.subtitle": "Using {model}",
+  "agentChat.needsSetup": "Set up a provider to chat",
+  "agentChat.clear": "Clear conversation",
+  "agentChat.empty": "Ask the agent for a first piece of work.",
+  "agentChat.placeholder": "Write a message… (Enter to send, Shift+Enter for a new line)",
+  "agentChat.send": "Send",
+  "agentChat.thinking": "The agent is replying",
+  "agentChat.estimated": "estimated",
+  "agentChat.truncated":
+    "Your allowance ran out mid-answer, so the reply was cut short. The partial text is kept and has been charged.",
+  "agentChat.remaining": "Remaining",
+  "agentChat.usageTokens": "Used {tokens} tokens",
+  "agentChat.usageTime": "Used {seconds}s of time",
+  "agentChat.meter.tokens": "Token meter",
+  "agentChat.meter.time": "Time meter",
+  "agentChat.meter.both": "Token + time meter",
+  "agentChat.unit.tokens": "tokens",
+  "agentChat.unit.minutes": "min",
+  "agentChat.gate.notConfigured":
+    "No AI provider is configured yet, so there is nothing to talk to.",
+  "agentChat.gate.openSettings": "Open AI provider settings",
+  "agentChat.gate.notLicensed":
+    "Chatting requires a valid license. Everything else in the app keeps working without one.",
+  "agentChat.gate.addLicense": "Add a license",
+  "agentChat.gate.notCovered":
+    "Your provider or license doesn't cover this agent. Adjust the allowed agents in Settings → AI provider, or use a license that includes it.",
+  "agentChat.gate.loadingPersona": "Loading this agent's persona…",
+  "agentChat.gate.outOfAllowance":
+    "Your {meter} allowance is used up. Add a license with remaining allowance to continue.",
+  "agentChat.footnote":
+    "Replies come from your own provider. Persona and conversation are sent to it; nothing else leaves this machine.",
 } as const;
 
 export type MessageKey = keyof typeof en;

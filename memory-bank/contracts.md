@@ -79,6 +79,48 @@ struct ToolInfo {            // for the Tools section
 > Per-tool exact conversion rules live in agency-agents `scripts/convert.sh` — port them
 > verbatim into `render/<tool>.rs`. Each `render` MUST be deterministic & idempotent.
 
+### Custom AI provider + offline license (provider/)
+
+```rust
+// state/provider.json — secret-free by construction (key + license live in the
+// OS keyring under the same service as the GitHub token).
+struct ProviderConfig {
+    enabled: bool,               // default true
+    label: String,
+    base_url: String,            // OpenAI-compatible root, e.g. https://api.x/v1
+    model: String,
+    meter: MeterMode,            // "tokens" | "time" | "both"
+    toman_per_1k_tokens: u64,
+    toman_per_minute: u64,
+    agents: Vec<String>,         // ["*"] = any licensed agent
+    allow_private_host: bool,    // master switch for the SSRF exemption
+    consented_hosts: Vec<String>,
+}
+
+// Signed license payload (base64 JSON + a stock minisign signature block).
+struct LicensePayload {
+    v: u32, license_id: String, plan: String, meter: MeterMode,
+    tokens: u64, minutes: u64, agents: Vec<String>, expires_at: u64,
+}
+struct LicenseStatus { present, valid, plan, meter, agents, expires_at,
+                       license_id, reason, message }   // reason is a stable code
+struct Entitlement   { plan, meter, tokens_remaining, seconds_remaining,
+                       tokens_used, seconds_used, expires_at }
+struct Charge        { tokens, seconds, estimated }
+struct TestOutcome   { ok, model, tokens, seconds, message }
+struct ProviderKeyStatus { configured: bool }
+
+// One streamed chat frame (over a tauri::ipc::Channel).
+enum ChatEvent { Delta { text }, Done { tokens, seconds, estimated } }
+
+// Requests.
+struct ChatRequest { agent_slug, agent_name, persona, history, message, lang }
+```
+
+Error codes added in §3.3: `provider_not_configured`, `provider_key_missing`,
+`provider_blocked_host`, `provider_http`, `provider_stream`, `license_invalid`
+(carries `reason`), `not_entitled` (carries `meter` + `remaining`).
+
 ## C. Tauri commands (the invoke surface — register in `lib.rs`)
 
 ```
@@ -111,15 +153,35 @@ trending_fetch(window) -> ...             // New & Updated / Popular from git hi
 quality_scan_all() / quality_scan_one(slug)        // opt-in lint+originality
 github_repo_stats() / github_star() / github_status() / github_create_issue(...)
 
+// custom AI provider (non-Claude) + offline license — provider/ + commands/provider.rs
+provider_config_get() -> ProviderConfig
+provider_config_set(config: ProviderConfig) -> ProviderConfig   // validates the base URL (SSRF)
+provider_key_set(key: String) -> ()            // OS keyring only, no disk fallback
+provider_key_status() -> ProviderKeyStatus     // never returns the key
+provider_key_clear() -> ()
+license_status() -> LicenseStatus              // offline verification, pinned pubkey
+license_set(blob: String) -> LicenseStatus     // reject-before-write
+license_clear() -> LicenseStatus
+entitlement_get() -> Option<Entitlement>
+provider_test() -> TestOutcome                 // setup probe; skips the license gate
+provider_chat_stream(request: ChatRequest, on_event: Channel<ChatEvent>) -> Charge
+
 // inherited verbatim from brew-browser: settings_*, update_*, app_version, cancel_job, open_in_finder
 ```
+
+**Gate order for every paid call** (do not reorder): Offline Mode
+(`require_network`) → agents only (agent slug + persona + profile scope) → paid
+access (license covers the agent, meter has allowance). The debit happens after
+the stream completes and is recorded in `state/provider-usage.json`.
 
 ## D. Frontend stores (Svelte 5 runes, `src/lib/stores/*.svelte.ts`)
 
 Replace brew stores with: `corpus`, `library` (reconciled installs), `tools`,
 `projects`, `loadouts`, `trending`, `quality`, plus inherited `settings`, `activity`,
-`github`, `ui`, `toast`, `updater`. Keep the `$state`/`$derived` rune patterns from
-brew-browser's stores verbatim.
+`github`, `ui`, `toast`, `updater` and the provider-era `provider` store
+(`src/lib/stores/provider.svelte.ts`: config + key status + license + entitlement,
+with `coversAgent(slug)` as the single UI-side "may this agent chat?" predicate).
+Keep the `$state`/`$derived` rune patterns from brew-browser's stores verbatim.
 
 ## E. Determinism rules (non-negotiable)
 

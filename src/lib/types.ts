@@ -245,7 +245,15 @@ export type AppErrorPayload =
   | { code: "scope_required"; scope: string }
   | { code: "hash_mismatch"; expected: string; actual: string }
   | { code: "signature_verification_failed"; message: string }
-  | { code: "downgrade_rejected"; current: string; target: string };
+  | { code: "downgrade_rejected"; current: string; target: string }
+  // Custom AI provider + offline license
+  | { code: "provider_not_configured"; message: string }
+  | { code: "provider_key_missing" }
+  | { code: "provider_blocked_host"; host: string }
+  | { code: "provider_http"; url: string; status: number; message: string }
+  | { code: "provider_stream"; message: string }
+  | { code: "license_invalid"; reason: string; message: string }
+  | { code: "not_entitled"; meter: string; remaining: number };
 
 /** Type-narrowing helper: is the thrown value a AppErrorPayload? */
 export function isAppError(e: unknown): e is AppErrorPayload {
@@ -284,6 +292,20 @@ export function appErrorMessage(e: AppErrorPayload): string {
       return `Update aborted: signature verification failed (${e.message}).`;
     case "downgrade_rejected":
       return `Update refused: ${e.target} is not newer than the installed version (${e.current}).`;
+    case "provider_not_configured":
+      return `AI provider isn't configured: ${e.message}. Set it up in Settings → AI provider.`;
+    case "provider_key_missing":
+      return "AI provider API key missing. Add it in Settings → AI provider.";
+    case "provider_blocked_host":
+      return `${e.host} is a private/loopback host. Allow it explicitly in Settings → AI provider if that endpoint is yours.`;
+    case "provider_http":
+      return `AI provider returned HTTP ${e.status}: ${e.message}`;
+    case "provider_stream":
+      return `AI provider stream error: ${e.message}`;
+    case "license_invalid":
+      return `License not usable (${e.reason}): ${e.message}. Add a valid license in Settings → AI provider.`;
+    case "not_entitled":
+      return `Allowance exhausted on the ${e.meter} meter (${e.remaining} left).`;
   }
 }
 
@@ -581,6 +603,7 @@ export type SettingsSection =
   | "appearance"
   | "catalog"
   | "network"
+  | "provider"
   | "github"
   | "activity"
   | "about";
@@ -588,3 +611,115 @@ export type SettingsSection =
 /** Command-palette item — a verb (action). */
 export type PaletteItem =
   | { kind: "command"; id: string; label: string; shortcut?: string; section?: string; run: () => void | Promise<void> };
+
+// =========================================================
+// Custom AI provider (non-Claude) + offline license — contracts.md §A
+// =========================================================
+//
+// The app ships no inference of its own: a user points it at THEIR OWN
+// OpenAI-compatible endpoint and pastes a signed license. Both the provider
+// choice and the license are agent-scoped — every call names an agent and
+// carries that agent's persona, which is what "limited to agents only" means
+// in practice.
+
+/** Which allowance a chat debits. `both` licenses can be billed either way. */
+export type ProviderMeter = "tokens" | "time" | "both";
+
+/** Provider settings (`state/provider.json`). Secret-free by construction:
+    the API key and the license live in the OS keyring. */
+export interface ProviderConfig {
+  enabled: boolean;
+  label: string;
+  /** OpenAI-compatible root, e.g. `https://api.deepseek.com/v1`. */
+  baseUrl: string;
+  model: string;
+  meter: ProviderMeter;
+  /** Display/charging rate for the token meter (Toman per 1k tokens). */
+  tomanPer1kTokens: number;
+  /** Display/charging rate for the time meter (Toman per minute). */
+  tomanPerMinute: number;
+  /** Agent slugs this credential serves. `["*"]` = any licensed agent. */
+  agents: string[];
+  /** Master switch for the private-endpoint exemption (SSRF guard). */
+  allowPrivateHost: boolean;
+  /** Hosts the user explicitly approved; only consulted with the switch on. */
+  consentedHosts: string[];
+}
+
+/** Mirrors the Rust `ProviderConfig::default()`. */
+export const PROVIDER_CONFIG_DEFAULTS: ProviderConfig = {
+  enabled: true,
+  label: "",
+  baseUrl: "",
+  model: "",
+  meter: "tokens",
+  tomanPer1kTokens: 2000,
+  tomanPerMinute: 30000,
+  agents: ["*"],
+  allowPrivateHost: false,
+  consentedHosts: [],
+};
+
+/** Whether an API key is in the keyring — never the key itself. */
+export interface ProviderKeyStatus {
+  configured: boolean;
+}
+
+/** Verified license state. `reason` is a stable code: missing | unconfigured |
+    malformed | decode | signature | expired | clock | agent. */
+export interface LicenseStatus {
+  present: boolean;
+  valid: boolean;
+  plan: string;
+  meter: ProviderMeter | null;
+  agents: string[];
+  expiresAt: number | null;
+  licenseId: string | null;
+  reason: string | null;
+  message: string | null;
+}
+
+/** Remaining allowance on the signed license. */
+export interface Entitlement {
+  plan: string;
+  meter: ProviderMeter;
+  tokensRemaining: number;
+  secondsRemaining: number;
+  tokensUsed: number;
+  secondsUsed: number;
+  expiresAt: number;
+}
+
+/** Result of the Settings connection test. */
+export interface ProviderTestOutcome {
+  ok: boolean;
+  model: string;
+  tokens: number;
+  seconds: number;
+  message: string;
+}
+
+/** What a completed chat turn cost. `truncated` means the reply was cut short
+    at the allowance boundary (the partial text is kept and charged). */
+export interface ChatCharge {
+  tokens: number;
+  seconds: number;
+  estimated: boolean;
+  truncated: boolean;
+}
+
+/** One frame of the streamed chat, sent over a Tauri `Channel`. */
+export type ProviderChatEvent =
+  | { kind: "delta"; text: string }
+  | { kind: "done"; tokens: number; seconds: number; estimated: boolean };
+
+/** A chat turn request. `agentSlug` + `persona` are required — the backend
+    refuses anything without an agent. */
+export interface ProviderChatRequest {
+  agentSlug: string;
+  agentName: string;
+  persona: string;
+  history: { role: "user" | "assistant"; content: string }[];
+  message: string;
+  lang: "fa" | "en";
+}
