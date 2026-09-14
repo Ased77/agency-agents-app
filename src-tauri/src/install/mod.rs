@@ -26,6 +26,7 @@ use crate::types::{
     UpdateKind,
 };
 use crate::util::fs::{atomic_write, read_capped};
+use crate::util::process::headless_tokio_command;
 
 /// Cap on an installed agent file we read back during reconciliation.
 const MAX_INSTALLED_BYTES: u64 = 4 * 1024 * 1024;
@@ -979,8 +980,9 @@ pub async fn reveal_path(path: String) -> Result<(), AppError> {
         let program = "explorer";
         #[cfg(all(unix, not(target_os = "macos")))]
         let program = "xdg-open";
-        std::process::Command::new(program)
-            .arg(&path)
+        let mut c = std::process::Command::new(program);
+        crate::util::proc::sanitize(&mut c);
+        c.arg(&path)
             .status()
             .map(|_| ())
             .map_err(|e| AppError::Io {
@@ -1012,7 +1014,10 @@ fn first_version_line(s: &str) -> Option<String> {
 
 async fn probe_version(tool: &str) -> Option<String> {
     let (bin, args) = version_cmd(tool)?;
-    let fut = tokio::process::Command::new(bin).args(args).output();
+    let mut command = headless_tokio_command(bin);
+    crate::util::proc::sanitize_tokio(&mut command);
+    command.args(args);
+    let fut = command.output();
     match tokio::time::timeout(std::time::Duration::from_secs(3), fut).await {
         Ok(Ok(o)) if o.status.success() => first_version_line(&String::from_utf8_lossy(&o.stdout))
             .or_else(|| first_version_line(&String::from_utf8_lossy(&o.stderr))),
